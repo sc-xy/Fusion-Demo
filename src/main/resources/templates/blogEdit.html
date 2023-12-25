@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/editormd.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .input {
+            width: 100%;
+            background-color: #fff;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .btn {
+            background-color: #6c84f9;
+            box-shadow: 0 4px 4px rgba(240, 199, 213, 0.3);
+            border-radius: 5px;
+            color: #e7e7e7;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.1rem;
+            padding: 0.9rem 4rem;
+            text-transform: uppercase;
+            transition: transform 80ms ease-in;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="alert" class="alert" style="display: none"></div>
+    <form action="/blog" method="post">
+        <input type="hidden" value="-1" name="id">
+        <input type="hidden" value="POST" name="_method">
+        <label>
+            <input type="text" name="title" placeholder="标题" class="input">
+        </label><br>
+        <div id="mdEditor">
+            <textarea name="content" id="content"></textarea>
+        </div>
+        <input type="submit" value="发布" class="btn" style="width: 100%;">
+    </form>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="/editormd.min.js"></script>
+<script>
+    let title;
+    let content;
+    // 初始化编辑器
+    var editor = editormd("mdEditor", {
+        width: "100%",
+        height: 640,
+        syncScrolling: "single",
+        saveHTMLToTextarea: true,
+        emoji: true,
+        taskList: true,
+        tocm: true,
+        tex: true,
+        flowChart: true,
+        sequenceDiagram: true,
+        imageUpload: true,
+        imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+        imageUploadURL: "/uploadImg",
+        onload: function () {
+            console.log('onload', this);
+            this.setMarkdown(content)
+        }
+    });
+</script>
+<script>
+    // 获取URL中的参数
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        // window.location.search获取url中"?"符后的字串
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURI(r[2]);
+        return null;
+    }
+    // 获取ID
+    var id = getUrlParam('id');
+    console.log(id);
+    // 如果ID存在，就获取博客信息
+    if (id) {
+        $('input[name="_method"]').val('PUT');
+        // 填写博客ID
+        $('input[name="id"]').val(id);
+        $.ajax({
+            url: '/blogDetail',
+            type: 'get',
+            data: {
+                id: id
+            },
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data)
+                if (data.code === 0) {
+                    var blog = data.data;
+                    $('input[name="title"]').val(blog.title);
+                    // editor.setMarkdown(blog.content);
+                    title = blog.title;
+                    content = blog.content;
+                } else {
+                    console.log(data.message)
+                    showAlert(data.message)
+                }
+            }
+        })
+
+    }
+</script>
+<script src="/js/style.js"></script>
+<script>
+    // 提交博客到后台，根据返回的信息，判断是否成功，成功就跳转到指定页面
+    $('form').submit(function (e) {
+        e.preventDefault();
+        // 检查标题和内容是否为空
+        if ($('input[name="title"]').val() === "") {
+            alert("请输入标题");
+        }else if(editor.getMarkdown() === ""){
+            alert("请输入博客正文");
+        }
+        else {
+            var data = $(this).serialize();
+            $.ajax({
+                url: '/blog',
+                type: 'post',
+                data: data,
+                success: function (data) {
+                    data = JSON.stringify(data)
+                    data = JSON.parse(data)
+                    data = JSON.parse(data)
+                    if (data.code === 0) {
+                        if (data.data === "no permission") {
+                            console.log("没有权限")
+                            showAlert("没有权限")
+                            return
+                        }
+                        window.location.href = '/blogs';
+                    } else {
+                        console.log(data.message)
+                        showAlert(data.message)
+                    }
+                }
+            })
+        }
+    })
+</script>
+
+</html>

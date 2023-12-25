@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      background: #e7e7e7 url("preview.gif") center no-repeat fixed;
+      background-size: cover;
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background-color: #e7e7e7;
+      border-radius: 0.7rem;
+      box-shadow:
+        0 0.9rem 1.7rem rgba(0, 0, 0, 0.25),
+        0 0.7rem 0.7rem rgba(0, 0, 0, 0.22);
+      height: 580px;
+      max-width: 750px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+
+    .form {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 1rem 3rem 1rem 3rem;
+      height: 100%;
+      text-align: center;
+      background-color: #e7e7e7;
+    }
+
+    .input {
+      width: 100%;
+      background-color: #fff;
+      padding: 0.5rem 0.9rem;
+      margin: 0.5rem 0;
+      border: none;
+      outline: none;
+    }
+
+    .span {
+      width: 100%;
+      background-color: #fff;
+      padding: 0.5rem 0.9rem;
+      margin: 0.5rem 0;
+      border: none;
+      outline: none;
+    }
+
+    .btn {
+      background-color: #6c84f9;
+      box-shadow: 0 4px 4px rgba(255, 112, 159, .3);
+      border-radius: 5px;
+      color: #e7e7e7;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      letter-spacing: 0.1rem;
+      padding: 0.9rem 4rem;
+      text-transform: uppercase;
+      transition: transform 80ms ease-in;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh / 12);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer-item {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px 10px 0 0;
+      /* 上边角圆滑的程度 */
+    }
+
+    .footer-item a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      padding: 10px;
+    }
+
+    .footer-item:nth-child(1),
+    .footer-item:nth-child(3) {
+      background-color: #e7e7e7;
+      /* 相同颜色 */
+    }
+
+    .footer-item:nth-child(2) {
+      background-color: #6c84f9;
+      /* 不同颜色 */
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    /*
+      保证thead中的th和tbody中的td宽度一致
+    */
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .pagination {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .pagination button {
+      padding: 5px 10px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    .table1 {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      padding: 1rem 3rem 1rem 3rem;
+      height: 413.6px;
+      background-color: #e7e7e7;
+    }
+    .search-input {
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
+      padding: 0.5rem 0.9rem;
+      margin: 0.5rem 0;
+      border: none;
+      outline: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- 搜索框, 在右上角 -->
+    <div class="search-input" style="padding-bottom: 0;">
+      <input type="text" id="search-input-text" placeholder="请输入搜索内容" class="input" style="margin: 0;">
+      <input type="button" id="search-input-button" value="搜索" class="btn">
+    </div>
+    <table class="table1">
+      <thead>
+        <tr>
+          <th>标题</th>
+          <th>概要</th>
+          <th>更新时间</th>
+        </tr>
+      </thead>
+      <tbody class="tbody">
+      </tbody>
+    </table>
+  
+    <div class="pagination">
+      <button id="previousBtn">上一页</button>
+      <button id="nextBtn">下一页</button>
+    </div>
+  
+  </div>
+  <div class="footer">
+    <div class="footer-item">
+        <a href="/chat">聊天室</a>
+    </div>
+    <div class="footer-item">
+        <a href="/blogIndex">博客空间</a>
+    </div>
+    <div class="footer-item">
+        <a href="/userMessage">个人空间</a>
+    </div>
+</div>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+  // 点击搜索按钮，获取输入框内容，检查是否为空，不为空则跳转到搜索结果页 search?content=xxx
+  $('#search-input-button').click(function () {
+    let content = $('#search-input-text').val();
+    if (content) {
+      window.location.href = '/searchBlog?searchText=' + content;
+    }else {
+      alert('搜索内容不能为空');
+    }
+  })
+</script>
+<script>
+  // 获取按时间排序的博客并分页，每页10条，渲染到tbody中，点击tr区域跳转到博客详情页 blog?id=xxx
+  let pageNum = 1;
+  let pageSize;
+  let totalCount;
+  getBlog();
+  function getBlog() {
+    $.ajax({
+      url: '/blogListByTime',
+      type: 'get',
+      data: {
+        pageNum: pageNum
+      },
+      success: function (data) {
+        data = data.data;
+        pageSize = data.pageSize;
+        totalCount = data.totalCount;
+        data = data.data;
+        // 清空tbody
+        $('.tbody').empty();
+        // 遍历data数组，将每个对象渲染到tbody中
+        data.forEach(function (item) {
+          // 预先处理时间格式
+          item.update_time = item.update_time.split('T')[0];
+          $('.tbody').append(`
+            <tr onclick="window.location.href='/blog?id=${item.id}'">
+              <td>${item.title}</td>
+              <td>${item.view_content}</td>
+              <td>${item.update_time}</td>
+            </tr>
+          `)
+        })
+      }
+    })
+  }
+  // 点击上一页按钮先判断是否是第一页，不是则将pageNum减一，然后调用getBlog函数
+  $('#previousBtn').click(function () {
+    if (pageNum > 1) {
+      pageNum--;
+      getBlog();
+    }
+  })
+  // 点击下一页按钮先判断是否是最后一页，不是则将pageNum加一，然后调用getBlog函数
+  $('#nextBtn').click(function () {
+    if (pageNum < Math.ceil(totalCount / pageSize)) {
+      pageNum++;
+      getBlog();
+    }
+  })
+</script>
+</html>

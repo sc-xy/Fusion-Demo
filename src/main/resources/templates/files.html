@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>用户管理文件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            background: #e7e7e7 url("preview.gif") center no-repeat fixed;
+            background-size: cover;
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #e7e7e7;
+            border-radius: 0.7rem;
+            box-shadow:
+                0 0.9rem 1.7rem rgba(0, 0, 0, 0.25),
+                0 0.7rem 0.7rem rgba(0, 0, 0, 0.22);
+            height: 580px;
+            max-width: 750px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+        }
+
+        .form {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 1rem 3rem 1rem 3rem;
+            height: 100%;
+            text-align: center;
+            background-color: #e7e7e7;
+        }
+
+        .input {
+            width: 100%;
+            background-color: #fff;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .span {
+            width: 100%;
+            background-color: #fff;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .btn {
+            background-color: #6c84f9;
+            box-shadow: 0 4px 4px rgba(240, 199, 213, 0.3);
+            border-radius: 5px;
+            color: #e7e7e7;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.1rem;
+            /* padding: 0.9rem 4rem; */
+            text-transform: uppercase;
+            transition: transform 80ms ease-in;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100vh / 12);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer-item {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px 10px 0 0;
+            /* 上边角圆滑的程度 */
+        }
+
+        .footer-item a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        .footer-item:nth-child(1),
+        .footer-item:nth-child(2) {
+            background-color: #e7e7e7;
+            /* 相同颜色 */
+        }
+
+        .footer-item:nth-child(3) {
+            background-color: #6c84f9;
+            /* 不同颜色 */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /*
+      保证thead中的th和tbody中的td宽度一致
+    */
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .pagination button {
+            padding: 5px 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+        .table1 {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            padding: 1rem 3rem 1rem 3rem;
+            height: 413.6px;
+            background-color: #e7e7e7;
+        }
+
+        .search-input {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .upload-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-form h2 {
+            margin-top: 0;
+        }
+
+        .upload-form input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #999;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <button id="uploadButton" class="btn" style="padding: 0.9rem 4rem; width: 100%;">上传文件</button>
+        <table class="table1">
+            <thead>
+                <tr>
+                    <th>文件名</th>
+                    <th>上传时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody class="tbody">
+            </tbody>
+        </table>
+        <div id="uploadForm" class="upload-form">
+            <h2>上传文件</h2>
+
+            <form>
+                <input type="file" name="file" required>
+                <br>
+                <button type="submit">上传</button>
+            </form>
+            <button id="closeButton" class="close-button">&times;</button>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="footer-item">
+            <a href="/chat">聊天室</a>
+        </div>
+        <div class="footer-item">
+            <a href="/blogIndex">博客空间</a>
+        </div>
+        <div class="footer-item">
+            <a href="/userMessage">个人空间</a>
+        </div>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+    // 获取按时间排序的博客并分页，每页10条，渲染到tbody中，点击tr区域跳转到博客详情页 blog?id=xxx
+    let pageNum = 1;
+    let pageSize;
+    let totalCount;
+    getFile();
+    function getFile() {
+        $.ajax({
+            url: '/fileList',
+            type: 'get',
+            data: {
+                pageNum: pageNum
+            },
+            success: function (data) {
+                data = data.data;
+                pageSize = data.pageSize;
+                totalCount = data.totalCount;
+                data = data.data;
+                // 清空tbody
+                $('.tbody').empty();
+                // 遍历data数组，将每个对象渲染到tbody中
+                data.forEach(function (item) {
+                    // 预先处理时间格式，还要添加编辑和删除按钮
+                    item.create_time = item.create_time.split('T')[0];
+                    var tr = document.createElement("tr");
+                    tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.create_time}</td>
+            <td>
+              <button onclick="downloadFile('${item.id}')">下载</button>
+              <button onclick="deleteFile(${item.id})">删除</button>
+            </td>
+          `;
+                    $('.tbody').append(tr);
+                });
+            }
+        })
+    }
+    // 点击下载按钮后，获取文件id，发送请求到 /download ，根据返回的下载连接进行下载
+    function downloadFile(id) {
+        $.ajax({
+            url: '/download',
+            type: 'get',
+            data: {
+                fileId: id
+            },
+            success: function (data) {
+                data = JSON.parse(data);
+                if (data.code === 0) {
+                    window.location.href = data.data;
+                } else {
+                    alert('下载失败');
+                }
+            }
+        })
+    }
+    // 点击删除按钮，弹出确认框，确认则删除，取消则不删除
+    function deleteFile(id) {
+        if (confirm('确认删除？')) {
+            $.ajax({
+                url: '/file',
+                type: 'post',
+                data: {
+                    fileId: id,
+                    _method: 'delete'
+                },
+                success: function (data) {
+                    data = JSON.parse(data);
+                    if (data.code === 0) {
+                        alert('删除成功');
+                        getFile();
+                    } else {
+                        alert('删除失败');
+                    }
+                }
+            })
+        }
+    }
+    // 点击上一页按钮先判断是否是第一页，不是则将pageNum减一，然后调用getBlog函数
+    $('#previousBtn').click(function () {
+        if (pageNum > 1) {
+            pageNum--;
+            getBlog();
+        }
+    })
+    // 点击下一页按钮先判断是否是最后一页，不是则将pageNum加一，然后调用getBlog函数
+    $('#nextBtn').click(function () {
+        if (pageNum < Math.ceil(totalCount / pageSize)) {
+            pageNum++;
+            getBlog();
+        }
+    })
+</script>
+<script>
+    // JavaScript代码
+    const uploadButton = document.getElementById("uploadButton");
+    const uploadForm = document.getElementById("uploadForm");
+    const closeButton = document.getElementById("closeButton");
+
+    // 显示上传文件表格
+    uploadButton.addEventListener("click", () => {
+        uploadForm.style.display = "block";
+    });
+
+    // 隐藏上传文件表格
+    closeButton.addEventListener("click", () => {
+        uploadForm.style.display = "none";
+    });
+    // 上传文件检查是否大于100M
+    const form = document.querySelector("form");
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const file = document.querySelector("input[type=file]").files[0];
+        if (file.size > 100 * 1024 * 1024) {
+            alert("文件不能大于100M");
+            // 清空input中的文件
+            document.querySelector("input[type=file]").value = "";
+            return;
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        fetch("/upload", {
+            method: "POST",
+            body: formData,
+        })
+            .then((res) => res.json())
+            .then((res) => {
+                if (res.code === 0) {
+                    alert("上传成功");
+                    uploadForm.style.display = "none";
+                    document.querySelector("input[type=file]").value = "";
+                    getFile();
+                } else {
+                    alert("上传失败");
+                }
+            });
+    });
+</script>
+
+</html>

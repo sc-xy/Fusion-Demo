@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      background: #e7e7e7 url("preview.gif") center no-repeat fixed;
+      background-size: cover;
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background-color: #e7e7e7;
+      border-radius: 0.7rem;
+      box-shadow:
+        0 0.9rem 1.7rem rgba(0, 0, 0, 0.25),
+        0 0.7rem 0.7rem rgba(0, 0, 0, 0.22);
+      height: 620px;
+      max-width: 750px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+
+    .form {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 1rem 3rem 1rem 3rem;
+      height: 100%;
+      text-align: center;
+      background-color: #e7e7e7;
+    }
+
+    .input {
+      width: 100%;
+      background-color: #fff;
+      padding: 0.5rem 0.9rem;
+      margin: 0.5rem 0;
+      border: none;
+      outline: none;
+    }
+
+    .span {
+      width: 100%;
+      background-color: #fff;
+      padding: 0.5rem 0.9rem;
+      margin: 0.5rem 0;
+      border: none;
+      outline: none;
+    }
+
+    .btn {
+      background-color: #6c84f9;
+      box-shadow: 0 4px 4px rgba(234, 230, 231, 0.3);
+      border-radius: 5px;
+      color: #e7e7e7;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      letter-spacing: 0.1rem;
+      padding: 0.9rem 4rem;
+      text-transform: uppercase;
+      transition: transform 80ms ease-in;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh / 12);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer-item {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px 10px 0 0;
+      /* 上边角圆滑的程度 */
+    }
+
+    .footer-item a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      padding: 10px;
+    }
+
+    .footer-item:nth-child(1),
+    .footer-item:nth-child(2) {
+      background-color: #e7e7e7;
+      /* 相同颜色 */
+    }
+
+    .footer-item:nth-child(3) {
+      background-color: #8094fa;
+      /* 不同颜色 */
+    }
+  </style>
+</head>
+
+<body>
+  <div id="alert" class="alert" style="display: none"></div>
+  <div class="container">
+    <div class="container-form">
+      <form action="/userInfo" class="form" id="form1" method="post">
+        <h2 class="form-title">管理信息</h2>
+        <span id="username"></span>
+        <input type="hidden" name="_method" value="PUT">
+        <input type="text" name="nickname" placeholder="昵称" class="input" />
+        <button type="button" class="btn">修改昵称</button>
+      </form>
+      <form action="/email" class="form" id="form2" method="post">
+        <input type="hidden" name="_method" value="PUT">
+        <input type="text" name="email" placeholder="邮箱" class="input" />
+        <input type="text" name="verifyCode" placeholder="验证码" class="input" />
+        <label for=""><input type="button" name="verifyCodeButton" value="获取验证码" class="btn">&nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" class="btn" name="emailChangeButton">修改邮箱</button></label>
+      </form>
+      <form action="/password/update" class="form" id="form3" method="post">
+        <input type="hidden" name="_method" value="PUT">
+        <input type="password" name="old_password" placeholder="旧密码" class="input" />
+        <input type="password" name="new_password" placeholder="新密码" class="input" />
+        <input type="password" name="re_new_password" placeholder="确认新密码" class="input" />
+        <button type="button" class="btn">修改密码</button>
+        <!-- 跳转到我的博客和我的文件页面 -->
+      </form>
+      <label style="display: flex; justify-content: center;"><button name="blogButton" class="btn">管理博客</button>&nbsp;&nbsp;&nbsp;&nbsp;<button name="fileButton" class="btn">管理文件</button></label>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-item">
+      <a href="/chat">聊天室</a>
+    </div>
+    <div class="footer-item">
+      <a href="/blogIndex">博客空间</a>
+    </div>
+    <div class="footer-item">
+      <a href="/userMessage">个人空间</a>
+    </div>
+  </div>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="/js/style.js"></script>
+<script>
+  // 进入页面时自动加载用户信息
+  $(function () {
+    $.ajax({
+      url: "/userInfo",
+      type: "GET",
+      success: function (data) {
+        data = JSON.stringify(data);
+        data = JSON.parse(data); 
+        console.log(data);
+        data = data.data;
+        $("#username").html(data.username);
+        $("input[name='nickname']").val(data.nickname);
+        // $("input[name='email']").val(data.email);
+        // $("input[name='new_password']").val(data.password);
+        // $("input[name='re_new_password']").val(data.password);
+      }
+    })
+  });
+</script>
+<script>
+  // 点击修改邮箱的时候，检查邮箱是否符合格式，不符合则提示，符合则提交表单
+  $("button[name='emailChangeButton']").click(function () {
+    var email = $("input[name='email']").val();
+    var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
+    if (!reg.test(email)) {
+      alert("邮箱格式不正确");
+    } else {
+      $("#form2").submit();
+    }
+  });
+</script>
+<script>
+  // 点击获取验证码的时候，检查邮箱是否符合格式，不符合则提示，符合则发送验证码，然后禁用按钮，倒计时60s
+  $("input[name='verifyCodeButton']").click(function () {
+    var email = $("input[name='email']").val();
+    var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
+    if (!reg.test(email)) {
+      alert("邮箱格式不正确");
+    } else {
+      $.ajax({
+        url: "/email",
+        type: "POST",
+        data: {
+          email: email
+        },
+        success: function (data) {
+          data = JSON.parse(data);
+          data = data.data
+          if (data == "success") {
+            alert("验证码已发送");
+            document.querySelector("input[name='verifyCodeButton']").disabled = true;
+            var time = 60;
+            var timer = setInterval(function () {
+              time--;
+              document.querySelector("input[name='verifyCodeButton']").value = time + "s";
+              if (time == 0) {
+                clearInterval(timer);
+                document.querySelector("input[name='verifyCodeButton']").value = "获取验证码";
+                document.querySelector("input[name='verifyCodeButton']").disabled = false;
+              }
+            }, 1000);
+          } else {
+            alert("验证码发送失败");
+          }
+        }
+      })
+    }
+  });
+</script>
+<script>
+  // 跳转到我的博客页面
+    $("button[name='blogButton']").click(function () {
+        window.location.href = "/blogs";
+    });
+    // 跳转到我的文件页面
+    $("button[name='fileButton']").click(function () {
+        window.location.href = "/files";
+    });
+</script>
+<script>
+  // 输入重复的密码后，检查两次密码是否一致，都不为空才检查，不一致则提示
+  $("input[name='re_new_password']").blur(function () {
+    var new_password = $("input[name='new_password']").val();
+    var re_new_password = $("input[name='re_new_password']").val();
+    if (new_password !== "" && re_new_password !== "") {
+      if (new_password !== re_new_password) {
+        alert("两次密码不一致");
+        // 清空重复密码
+        $("input[name='re_new_password']").val("");
+      }
+    }
+  });
+  $("input[name='new_password']").blur(function () {
+    var new_password = $("input[name='new_password']").val();
+    var re_new_password = $("input[name='re_new_password']").val();
+    if (new_password !== "" && re_new_password !== "") {
+      if (new_password !== re_new_password) {
+        alert("两次密码不一致");
+        // 清空重复密码
+        $("input[name='re_new_password']").val("");
+      }
+    }
+  });
+</script>
+<script>
+  // 点击修改密码的时候，检查密码是否为空，不为空则提交表单
+  $("#form3 .btn").click(function () {
+    var old_password = $("input[name='old_password']").val();
+    var new_password = $("input[name='new_password']").val();
+    var re_new_password = $("input[name='re_new_password']").val();
+    if (old_password == "" || new_password == "" || re_new_password == "") {
+      alert("密码不能为空");
+    } else {
+      $("#form3").submit();
+    }
+  });
+</script>
+<script>
+  // 点击修改昵称的时候，检查昵称是否为空，不为空则提交表单
+  $("#form1 .btn").click(function () {
+    var nickname = $("input[name='nickname']").val();
+    if (nickname == "") {
+      alert("昵称不能为空");
+    } else {
+      $("#form1").submit();
+    }
+  });
+</script>
+<script th:inline="javascript">
+  // 在Thymeleaf中内联JavaScript，将Flash属性传递给前端变量
+  var messageFromServer = [[${ message }]];
+  if (messageFromServer) {
+      alert(messageFromServer);
+  }
+</script>
+</html>

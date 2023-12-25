@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/editormd.preview.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100vh / 12);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer-item {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px 10px 0 0;
+            /* 上边角圆滑的程度 */
+        }
+
+        .footer-item a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        .footer-item:nth-child(1),
+        .footer-item:nth-child(3) {
+            background-color: #e7e7e7;
+            /* 相同颜色 */
+        }
+
+        .footer-item:nth-child(2) {
+            background-color: #6c84f9;
+            /* 不同颜色 */
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .comments {
+            margin-top: 30px;
+        }
+
+        .comments textarea {
+            width: 100%;
+            height: 80px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            padding: 5px;
+            resize: vertical;
+        }
+
+        .comments button {
+            padding: 8px 16px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .comment {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .comment p {
+            margin: 0;
+        }
+
+        .comment-info {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 5px;
+        }
+
+        .sub-comment {
+            margin-left: 20px;
+            background-color: #ebebeb;
+        }
+
+        .reply-button {
+            font-size: 12px;
+            color: #333;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .commentButton {
+            /* 占满一行 */
+            width: 100%;
+            /* 去掉默认样式 */
+            border: none;
+            /* 背景颜色 */
+            background-color: #6c84f9;
+            /* 字体颜色 */
+            color: #fff;
+            /* 字体大小 */
+            font-size: 16px;
+            /* 高度 */
+            height: 40px;
+            /* 圆角 */
+            border-radius: 4px;
+            /* 鼠标移上去的样式 */
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="title"></h1>
+        <div id="doc-content" style="width: auto">
+            <textare name="content" id="content"></textare>
+        </div>
+        <h2>评论区</h2>
+        <div id="comments" class="comments">
+
+        </div>
+        <div id="comment-form-container">
+            <form action="/comment" method="post" id="comment-form">
+                <textarea name="content" id="comment-content" cols="108" rows="5" maxlength="200"
+                    placeholder="输入评论内容"></textarea><br>
+                <button id="comment-btn" type="submit" class="commentButton">评论</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+<script src="/lib/marked.min.js"></script>
+<script src="/lib/raphael.min.js"></script>
+<script src="/lib/prettify.min.js"></script>
+<script src="/lib/raphael.min.js"></script>
+<script src="/lib/underscore.min.js"></script>
+<script src="/lib/sequence-diagram.min.js"></script>
+<script src="/lib/flowchart.min.js"></script>
+<script src="/lib/jquery.flowchart.min.js"></script>
+<script src="/editormd.min.js"></script>
+<script>
+    // 获取ID
+    var id = getUrlParam('id');
+    var isAuth = false;
+    var deleteShow = 'style="display: none"';
+    var parentId = -1;
+    // 如果ID存在，就获取博客信息和评论信息
+    if (id) {
+        $.ajax({
+            url: '/commentAuth',
+            type: 'get',
+            data: {
+                blogId: id
+            },
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data);
+                data = JSON.parse(data);
+                if (data.data === "有权限") {
+                    isAuth = true;
+                    deleteShow = '';
+                }
+            }
+        })
+        $.ajax({
+            url: '/blogDetail',
+            type: 'get',
+            data: {
+                id: id
+            },
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data);
+                if (data.code === 0) {
+                    var blog = data.data;
+                    if (blog) {
+                        var blogTitle = $('#title');
+                        blogTitle.html(blog.title);
+                        var testEditor;
+                        $(function () {
+                            testEditor = editormd.markdownToHTML("doc-content", {//注意：这里是上面DIV的id
+                                htmlDecode: "style,script,iframe",
+                                markdown: blog.content,//+ "\r\n" + $("#append-test").text(),
+                                emoji: true,
+                                taskList: true,
+                                tocm: true,
+                                tex: true, // 默认不解析
+                                flowChart: true, // 默认不解析
+                                sequenceDiagram: true, // 默认不解析
+                                codeFold: true
+                            });
+                        });
+                    }
+                }
+            }
+        })
+        getComments();
+    }
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        // window.location.search获取url中"?"符后的字串
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURI(r[2]);
+        return null;
+    }
+    function deleteComment(id) {
+        // 询问是否删除
+        var isDelete = confirm('是否删除该评论？');
+        if (!isDelete) {
+            return;
+        }
+        $.ajax({
+            url: '/comment',
+            type: 'delete',
+            data: {
+                commentId: id
+            },
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data);
+                data = JSON.parse(data);
+                if (data.data === "删除成功") {
+                    alert("删除成功");
+                    flushComment();
+                }
+            }
+        })
+    }
+    function replyComment(id, nickName) {
+        parentId = id;
+        $('#comment-content').attr('placeholder', '@' + nickName).focus();
+        // 平滑滑动到评论框
+        $('html, body').animate({
+            scrollTop: $('#comment-form-container').offset().top,
+            behavior: 'smooth'
+        }, 500);
+    }
+    function flushComment() {
+        $('#comment-content').val('');
+        $('#parentId').val('-1');
+        getComments();
+    }
+    function getComments() {
+        $.ajax({
+            url: '/comments',
+            type: 'get',
+            data: {
+                blogId: id
+            },
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data);
+                if (data.code === 0) {
+                    var comments = data.data;
+                    if (comments) {
+                        var commentHtml = '';
+                        for (var i = 0; i < comments.length; i++) {
+                            comments[i].create_time = comments[i].create_time.split('T')[0];
+                            var comment = comments[i];
+                            var commentInfo = '<div class="comment-info"><span>' + comment.user_nick_name + '</span>&nbsp;&nbsp;<span>' + comment.create_time + '</span></div>';
+                            var commentContent = '<p>' + comment.content + '</p>';
+                            var replyButton = '<button class="reply-button" onclick="replyComment(' + comment.id + ', \'' + comment.user_nick_name + '\')">回复评论</button>';
+                            var deleteButton = '<button class="reply-button" onclick="deleteComment(' + comment.id + ')" ' + deleteShow + '>删除评论</button>';
+                            var commentDiv = '<div class="comment">' + commentInfo + commentContent + replyButton + deleteButton + '</div>';
+                            commentHtml += commentDiv;
+                            var subComments = comment.reply_comments;
+                            if (subComments) {
+                                for (var j = 0; j < subComments.length; j++) {
+                                    var subComment = subComments[j];
+                                    // 处理时间格式，添加回复按钮
+                                    subComment.create_time = subComment.create_time.split('T')[0];
+                                    var subCommentInfo = '<div class="comment-info"><span>' + subComment.user_nick_name + '</span>&nbsp;&nbsp;<span>' + subComment.create_time + '</span></div>';
+                                    var subCommentContent = '<p>' + subComment.content + '</p>';
+                                    var replyButton = '<button class="reply-button" onclick="replyComment(' + subComment.id + ', \'' + subComment.user_nick_name + '\')">回复评论</button>';
+                                    var deleteButton = '<button class="reply-button" onclick="deleteComment(' + subComment.id + ')" ' + deleteShow + '>删除评论</button>';
+                                    var subCommentDiv = '<div class="sub-comment">' + subCommentInfo + subCommentContent + replyButton + deleteButton + '</div>';
+                                    commentHtml += subCommentDiv;
+                                }
+                            }
+                            // 将子评论框添加到父评论框中
+                            commentHtml += '<div id="sub-comment-form-container-' + comment.id + '"></div>';
+                        }
+                        $('#comments').html(commentHtml);
+                    }
+                }
+            }
+        })
+    }
+    // 处理评论
+    $('#comment-form').submit(function (e) {
+        // 检查评论是否为空
+        var content = $('#comment-content').val();
+        if (!content) {
+            alert('评论不能为空');
+            return;
+        }
+        e.preventDefault();
+        var data = $(this).serialize();
+        data += '&blogId=' + id;
+        data += '&parentId=' + parentId;
+        $.ajax({
+            url: '/comment',
+            type: 'post',
+            data: data,
+            success: function (data) {
+                data = JSON.stringify(data)
+                data = JSON.parse(data);
+                data = JSON.parse(data);
+                console.log(data);
+                if (data.data === "评论成功") {
+                    flushComment();
+                } else {
+                    alert(data.data);
+                    window.location.href = '/login';
+                }
+            }
+        })
+    })
+</script>
+
+</html>

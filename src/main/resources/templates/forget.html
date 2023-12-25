@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            background: #e7e7e7 url("preview.gif") center no-repeat fixed;
+            background-size: cover;
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #e7e7e7;
+            border-radius: 0.7rem;
+            box-shadow:
+                0 0.9rem 1.7rem rgba(0, 0, 0, 0.25),
+                0 0.7rem 0.7rem rgba(0, 0, 0, 0.22);
+            height: 420px;
+            max-width: 750px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+        }
+
+        .form {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 3rem;
+            height: 100%;
+            text-align: center;
+            background-color: #e7e7e7;
+        }
+
+
+        .input {
+            width: 100%;
+            background-color: #fff;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .span {
+            width: 100%;
+            background-color: #fff;
+            padding: 0.5rem 0.9rem;
+            margin: 0.5rem 0;
+            border: none;
+            outline: none;
+        }
+
+        .btn {
+            background-color: #6c84f9;
+            box-shadow: 0 4px 4px rgba(234, 230, 231, 0.3);
+            border-radius: 5px;
+            color: #e7e7e7;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 0.1rem;
+            padding: 0.9rem 4rem;
+            text-transform: uppercase;
+            transition: transform 80ms ease-in;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="alert" class="alert" style="display: none"></div>
+    <div class="container">
+        <div class="container-form">
+            <form action="/password" method="post" class="form" id="form">
+                <h2 class="form-title">忘记密码</h2>
+                <label>
+                    <input type="hidden" name="_method" value="PUT">
+                </label>
+                <input type="text" name="username" placeholder="用户名" class="input" />
+                <input type="text" name="verifyCode" placeholder="验证码" class="input" />
+                <input type="button" name="verifyCodeButton" value="获取验证码" class="btn">
+                <input type="password" name="password" placeholder="新密码" class="input" />
+                <input type="password" name="re_password" placeholder="确认密码" class="input" />
+                <button type="button" class="btn" id="forget_button">点击修改</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="/js/style.js"></script>
+<script>
+    // 点击修改后检查用户名和密码
+    document.querySelector("#forget_button").addEventListener("click", function () {
+        var username = document.querySelector("input[name='username']").value;
+        var password = document.querySelector("input[name='password']").value;
+        if (username === "" || password === "") {
+            alert("用户名或密码不能为空");
+        } else {
+            document.querySelector("#form").submit();
+        }
+    })
+</script>
+<script>
+    // 点击获取验证码按钮后，发送ajax请求，获取验证码,并把按钮设置为不可点击，倒计时60秒
+    document.querySelector("input[name='verifyCodeButton']").addEventListener("click", function () {
+        var username = document.querySelector("input[name='username']").value;
+        if (username === "") {
+            alert("用户名不能为空");
+        } else {
+            $.ajax({
+                url: "/email/forget",
+                type: "post",
+                data: {
+                    username: username
+                },
+                success: function (data) {
+                    data = JSON.parse(data);
+                    data = data.data;
+                    if (data === "success") {
+                        // 设置按钮为不可点击
+                        document.querySelector("input[name='verifyCodeButton']").disabled = true;
+                        // 设置倒计时60秒
+                        var time = 60;
+                        // 设置定时器
+                        var timer = setInterval(function () {
+                            // 如果倒计时结束
+                            if (time === 0) {
+                                // 清除定时器
+                                clearInterval(timer);
+                                // 设置按钮为可点击
+                                document.querySelector("input[name='verifyCodeButton']").disabled = false;
+                                // 设置按钮的内容为获取验证码
+                                document.querySelector("input[name='verifyCodeButton']").value = "获取验证码";
+                            } else {
+                                // 设置按钮的内容为倒计时的时间
+                                document.querySelector("input[name='verifyCodeButton']").value = time + "秒后重新获取";
+                                // 时间减一
+                                time--;
+                            }
+                        }, 1000);
+                    } else if (data === "no such user") {
+                        alert("用户名不存在");
+                    }
+                }
+            });
+        }
+    });
+
+</script>
+<script>
+    // 输入重复的密码后检查是否一致，不一致就弹窗提示，并把重复的密码清空
+    document.querySelector("input[name='re_password']").addEventListener("blur", function () {
+        var password = document.querySelector("input[name='password']").value;
+        var re_password = document.querySelector("input[name='re_password']").value;
+        // 如果两个密码都不为空，就检查是否一致
+        if (password !== "" && re_password !== "") {
+            if (password !== re_password) {
+                alert("两次输入的密码不一致，请重新输入");
+                document.querySelector("input[name='re_password']").value = "";
+            }
+        }
+    });
+    // 输入密码检查是否一致，不一致就弹窗提示，并把重复的密码清空
+    document.querySelector("input[name='password']").addEventListener("blur", function () {
+        var password = document.querySelector("input[name='password']").value;
+        var re_password = document.querySelector("input[name='re_password']").value;
+        // 如果两个密码都不为空，就检查是否一致
+        if (password !== "" && re_password !== "") {
+            if (password !== re_password) {
+                alert("两次输入的密码不一致，请重新输入");
+                document.querySelector("input[name='re_password']").value = "";
+            }
+        }
+    });
+</script>
+<script th:inline="javascript">
+    // 在Thymeleaf中内联JavaScript，将Flash属性传递给前端变量
+    var messageFromServer = [[${ message }]];
+    if (messageFromServer) {
+        alert(messageFromServer)
+        // 在页面中进行显示，可以通过修改DOM元素的内容或添加新元素来实现
+    }
+</script>
+
+</html>

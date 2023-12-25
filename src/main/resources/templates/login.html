@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/login.css">
+</head>
+
+<body>
+    <div id="alert" class="alert" style="display: none"></div>
+    <div class="container">
+        <div class="container-form container-signup" id="signup-container">
+            <form action="/userInfo" class="form" id="form1" method="post">
+                <h2 class="form-title">注册账号</h2>
+                <input type="text" name="reg_username" placeholder="用户名" class="input" />
+                <input type="password" name="reg_password" placeholder="密码" class="input" />
+                <input type="password" name="re_reg_password" placeholder="确认密码" class="input" />
+                <input type="text" name="email" placeholder="邮箱" class="input" />
+                <input type="text" name="reg_verifyCode" placeholder="验证码" class="input" />
+                <input type="button" name="reg_verifyCodeButton" value="获取验证码" class="btn">
+                <input type="text" name="nickname" placeholder="昵称" class="input" />
+                <button type="button" class="btn" id="reg_button">点击注册</button>
+            </form>
+        </div>
+        <div class="container-form container-signin hidden" id="signin-container">
+            <form action="/login" class="form" id="form2" method="post">
+                <h2 class="form-title">欢迎登录</h2>
+                <input type="text" name="username" placeholder="用户名" class="input" />
+                <input type="password" name="password" placeholder="password" class="input" />
+                <a href="/forget" class="link">忘记密码?</a>
+                <button type="button" class="btn">登录</button>
+            </form>
+        </div>
+
+        <div class="container-overlay">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <button class="btn" id="signIn">
+                        已有账号，直接登录
+                    </button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <button class="btn" id="signUp">
+                        没有账号，点击注册
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="./js/login.js"></script>
+<script>
+    // 登录时检查用户名和密码是否为空
+    document.querySelector("#form2 .btn").addEventListener("click", function () {
+        var username = document.querySelector("#form2 input[name='username']").value;
+        var password = document.querySelector("#form2 input[type='password']").value;
+        if (username === "") {
+            alert("用户名不能为空");
+        } else if (password === "") {
+            alert("密码不能为空");
+        } else {
+            document.querySelector("#form2").submit();
+        }
+    });
+</script>
+<script>
+    // 输入用户名失去焦点时检查用户名是否存在，如果存在则显示提示信息，
+    document.querySelector("#form1 input[name='reg_username']").addEventListener("blur", function () {
+        var username = document.querySelector("#form1 input[name='reg_username']").value;
+        if (username !== "") {
+            $.ajax({
+                url: "/userMessage/" + username,
+                type: "get",
+                success: function (data) {
+                    // 转化为json对象
+                    data = JSON.parse(data);
+                    console.log(data);
+                    data = data.data;
+                    if (data === "exist") {
+                        alert("用户名已存在");
+                        document.querySelector("#form1 input[name='reg_username']").value = "";
+                    }
+                }
+            });
+        }
+    });
+</script>
+<script>
+    // 邮箱失去焦点时检查邮箱是否合理，如果不合理则显示提示信息然后清空
+    document.querySelector("#form1 input[name='email']").addEventListener("blur", function () {
+        var email = document.querySelector("#form1 input[name='email']").value;
+        if (email !== "") {
+            var reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
+            if (!reg.test(email)) {
+                alert("请输入合法的邮箱");
+                document.querySelector("#form1 input[name='email']").value = "";
+            }
+        }
+    });
+</script>
+<script>
+    // 点击获取验证码按钮后，发送ajax请求，获取验证码，同时按钮变为不可点击状态，倒计时60s
+    document.querySelector("#form1 input[name='reg_verifyCodeButton']").addEventListener("click", function () {
+        var email = document.querySelector("#form1 input[name='email']").value;
+        if (email !== "") {
+            var reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
+            if (!reg.test(email)) {
+                alert("请输入合法的邮箱");
+                document.querySelector("#form1 input[name='email']").value = "";
+            } else {
+                $.ajax({
+                    url: "/email",
+                    type: "post",
+                    data: {
+                        email: email
+                    },
+                    success: function (data) {
+                        // 转化为json对象
+                        data = JSON.parse(data);
+                        console.log(data);
+                        data = data.data;
+                        if (data === "success") {
+                            alert("验证码已发送，请注意查收");
+                            // 按钮变为不可点击状态
+                            document.querySelector("#form1 input[name='reg_verifyCodeButton']").disabled = true;
+                            // 倒计时60s
+                            var time = 60;
+                            var timer = setInterval(function () {
+                                time--;
+                                document.querySelector("#form1 input[name='reg_verifyCodeButton']").value = time + "s后重新获取";
+                                if (time === 0) {
+                                    clearInterval(timer);
+                                    document.querySelector("#form1 input[name='reg_verifyCodeButton']").value = "获取验证码";
+                                    document.querySelector("#form1 input[name='reg_verifyCodeButton']").disabled = false;
+                                }
+                            }, 1000);
+                        } else {
+                            alert("验证码发送失败");
+                        }
+                    }
+                });
+            }
+        }
+    });
+</script>
+<script>
+    // 输入重复的密码后检查是否一致，不一致就弹窗提示，并把重复的密码清空
+    document.querySelector("#form1 input[name='re_reg_password']").addEventListener("blur", function () {
+        var password = document.querySelector("#form1 input[name='reg_password']").value;
+        var re_password = document.querySelector("#form1 input[name='re_reg_password']").value;
+        // 如果两个密码任意一个为空，就不进行比较
+        if (password !== "" && re_password !== "") {
+            if (password !== re_password) {
+                alert("两次密码不一致");
+                document.querySelector("#form1 input[name='re_reg_password']").value = "";
+            }
+        }
+    });
+    // 密码输入后检查是否一致，不一致就弹窗提示，并把重复的密码清空
+    document.querySelector("#form1 input[name='reg_password']").addEventListener("blur", function () {
+        var password = document.querySelector("#form1 input[name='reg_password']").value;
+        var re_password = document.querySelector("#form1 input[name='re_reg_password']").value;
+        // 如果两个密码任意一个为空，就不进行比较
+        if (password !== "" && re_password !== "") {
+            if (password !== re_password) {
+                alert("两次密码不一致");
+                document.querySelector("#form1 input[name='re_reg_password']").value = "";
+            }
+        }
+    });
+</script>
+<script>
+    // 注册时检查用户名和密码是否为空
+    document.querySelector("#form1 #reg_button").addEventListener("click", function () {
+        var username = document.querySelector("#form1 input[name='reg_username']").value;
+        var password = document.querySelector("#form1 input[name='reg_password']").value;
+        var re_password = document.querySelector("#form1 input[name='re_reg_password']").value;
+        var email = document.querySelector("#form1 input[name='email']").value;
+        var nickname = document.querySelector("#form1 input[name='nickname']").value;
+        if (username === "") {
+            alert("请填写用户名");
+        } else if (password === "" || re_password === "") {
+            alert("密码不能为空");
+        } else if (password !== re_password) {
+            alert("两次密码不一致");
+        } else if (email === "") {
+            alert("邮箱不能为空");
+        } else if (nickname === "") {
+            alert("请填写昵称");
+        } else if (document.querySelector("#form1 input[name='reg_verifyCode']").value === "") {
+            alert("验证码不能为空");
+        } else {
+            document.querySelector("#form1").submit();
+        }
+    });
+</script>
+<script>
+
+</script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="/js/style.js"></script>
+<script th:inline="javascript">
+    // 在Thymeleaf中内联JavaScript，将Flash属性传递给前端变量
+    var messageFromServer = [[${ message }]];
+    if (messageFromServer) {
+        showAlert(messageFromServer)
+        // 在页面中进行显示，可以通过修改DOM元素的内容或添加新元素来实现
+    }
+</script>
+
+</html>

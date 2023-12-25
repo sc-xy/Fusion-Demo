@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>聊天室</title>
+  <style>
+    /* 样式设置 */
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #e7e7e7 url("preview.gif") center no-repeat fixed;
+      /**/
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      /**/
+
+    }
+
+    .container {
+      display: flex;
+      max-width: 750px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #e7e7e7;
+      border-radius: 0.7rem;
+      position: relative;
+      /**/
+      width: 80%;
+      height: 413.6px;
+      /**/
+      box-shadow:
+        0 0.9rem 1.7rem rgba(0, 0, 0, 0.25),
+        0 0.7rem 0.7rem rgba(0, 0, 0, 0.22);
+    }
+
+    .chat-list {
+      flex: 1;
+      padding-right: 20px;
+    }
+
+    .chat-room {
+      flex: 3;
+      padding-left: 20px;
+      display: none;
+      /* 初始时隐藏聊天室 */
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      height: 28px;
+    }
+
+    .chat-item {
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .chat-item.active {
+      background-color: #ebebeb;
+    }
+
+    .chat-content {
+      height: 300px;
+      padding: 10px;
+      background-color: #ebebeb;
+      border-radius: 4px;
+      overflow-y: scroll;
+    }
+
+    .message {
+      margin-bottom: 10px;
+    }
+
+    .message .sender {
+      font-weight: bold;
+    }
+
+    .message .time {
+      font-size: 12px;
+      color: #777;
+    }
+
+    .input-box {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    .input-box input[type="text"] {
+      flex: 1;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .input-box button {
+      padding: 5px 10px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .block-button {
+      margin-left: 10px;
+      font-size: 12px;
+      color: #333;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh / 12);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer-item {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 10px 10px 0 0;
+      /* 上边角圆滑的程度 */
+    }
+
+    .footer-item a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      padding: 10px;
+    }
+
+    .footer-item:nth-child(3),
+    .footer-item:nth-child(2) {
+      background-color: #e7e7e7;
+      /* 相同颜色 */
+    }
+
+    .footer-item:nth-child(1) {
+      background-color: #6c84f9;
+      /* 不同颜色 */
+    }
+
+    .sender i {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #6c84f9;
+      text-align: center;
+      line-height: 30px;
+      color: #fff;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="chat-list">
+      <h1>聊天列表</h1>
+
+      <div class="chat-item active" data-chat="public">
+        <span>公共聊天室</span>
+      </div>
+    </div>
+
+    <div class="chat-room" id="public-chat">
+      <h1>公共聊天室</h1>
+
+      <div class="chat-content" id="public-content">
+
+      </div>
+
+      <form class="public-send" id="public-send">
+        <div class="input-box">
+          <input type="hidden" value="public" id="public-receiver">
+          <input type="text" placeholder="输入消息" id="public-message" autocomplete="off" maxlength="100">
+          <button type="submit">发送</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <div class="footer">
+    <div class="footer-item">
+      <a href="#">聊天室</a>
+    </div>
+    <div class="footer-item">
+      <a href="/blogIndex">博客空间</a>
+    </div>
+    <div class="footer-item">
+      <a href="/userMessage">个人空间</a>
+    </div>
+  </div>
+</body>
+<script>
+  const chatItems = document.querySelectorAll('.chat-item');
+  const chatRooms = document.querySelectorAll('.chat-room');
+
+  chatItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const chatId = item.getAttribute('data-chat');
+      console.log(chatId);
+      chatItems.forEach(item => {
+        item.classList.remove('active');
+      });
+
+      chatRooms.forEach(room => {
+        room.style.display = 'none';
+      });
+
+      item.classList.add('active');
+      document.getElementById(chatId + '-chat').style.display = 'block';
+    });
+  });
+</script>
+<script>
+  // 屏蔽按钮点击事件，先询问是否屏蔽，然后再屏蔽
+  function shield(receiver) {
+    var r = confirm("确定要屏蔽" + receiver + "吗?");
+    if (r == true) {
+      // 发送屏蔽请求
+      $.ajax({
+        url: '/shield',
+        type: 'post',
+        data: {
+          user_name: username,
+          shield_name: receiver
+        },
+        success: function (data) {
+          data = JSON.stringify(data);
+          data = JSON.parse(data);
+          if (data.data === 1) {
+            alert('屏蔽成功');
+          } else {
+            alert('屏蔽失败');
+          }
+        }
+      })
+    }
+  }
+</script>
+<script>
+  // 添加新的chatitem和对应的chatroom，
+  function addNewChat(receiver) {
+    // 先创建chat-item
+    var chatItem = document.createElement('div');
+    chatItem.classList.add('chat-item');
+    chatItem.setAttribute('data-chat', receiver);
+    chatItem.innerHTML = '<span>' + receiver + '</span>';
+    // 添加到chat-list
+    var chatList = document.querySelector('.chat-list');
+    chatList.appendChild(chatItem);
+    var chatRoom = document.createElement('div');
+    chatRoom.classList.add('chat-room');
+    chatRoom.setAttribute('id', receiver + '-chat');
+    // 创建h1
+    var h1 = document.createElement('h1');
+    h1.innerHTML = receiver;
+    // 创建屏蔽按钮
+    var blockButton = document.createElement('button');
+    blockButton.classList.add('block-button');
+    blockButton.innerHTML = '屏蔽';
+    blockButton.addEventListener('click', function () {
+      shield(receiver);
+    });
+    // 添加到h1
+    h1.appendChild(blockButton);
+    chatRoom.appendChild(h1);
+    // 创建chat-content
+    var chatContent = document.createElement('div');
+    chatContent.classList.add('chat-content');
+    chatContent.setAttribute('id', receiver + '-content');
+    chatRoom.appendChild(chatContent);
+    // 创建form
+    var form = document.createElement('form');
+    form.classList.add('public-send');
+    form.setAttribute('id', receiver + '-send');
+    // 创建input-box
+    var inputBox = document.createElement('div');
+    inputBox.classList.add('input-box');
+    // 创建input
+    var input = document.createElement('input');
+    input.setAttribute('type', 'hidden');
+    input.setAttribute('value', receiver);
+    input.setAttribute('id', receiver + '-receiver');
+    // 创建input
+    var input2 = document.createElement('input');
+    input2.setAttribute('type', 'text');
+    input2.setAttribute('placeholder', '输入消息');
+    input2.setAttribute('id', receiver + '-message');
+    input2.setAttribute('autocomplete', 'off');
+    input2.setAttribute('maxlength', '100');
+    // 创建button
+    var button = document.createElement('button');
+    button.setAttribute('type', 'submit');
+    button.innerHTML = '发送';
+    // 添加到inputBox
+    inputBox.appendChild(input);
+    inputBox.appendChild(input2);
+    inputBox.appendChild(button);
+    // 添加到form
+    form.appendChild(inputBox);
+    // 添加到chatRoom
+    chatRoom.appendChild(form);
+    // 添加到container
+    var container = document.querySelector('.container');
+    container.appendChild(chatRoom);
+    const chatItems = document.querySelectorAll('.chat-item');
+    const chatRooms = document.querySelectorAll('.chat-room');
+    // 因为添加了新的chat-item，所以都要重新绑定事件
+    chatItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const chatId = item.getAttribute('data-chat');
+        console.log(chatId);
+        chatItems.forEach(item => {
+          item.classList.remove('active');
+        });
+
+        chatRooms.forEach(room => {
+          room.style.display = 'none';
+        });
+
+        item.classList.add('active');
+        document.getElementById(chatId + '-chat').style.display = 'block';
+      });
+    });
+    // 添加发送事件，添加匿名函数
+    document.querySelector('#' + receiver + '-send').addEventListener('submit', function (event) {
+      event.preventDefault();
+      // 获取表格数据
+      var messageContent = document.querySelector('#' + receiver + '-message').value.trim();
+      var receiverId = document.querySelector('#' + receiver + '-receiver').value.trim();
+      // 先查询是否屏蔽了该用户或者被屏蔽了
+      $.ajax({
+        url: '/shield',
+        type: 'get',
+        data: {
+          user_name: username,
+          shield_name: receiver
+        },
+        success: function (data) {
+          data = JSON.stringify(data);
+          data = JSON.parse(data);
+          if (data.data === 1) {
+            alert('您已被对方屏蔽或者您屏蔽了对方，无法发送消息');
+          } else {
+            if (messageContent && stompClient) {
+              var chatMessage = {
+                sender: username,
+                msg: messageContent,
+                receiver: receiverId,
+                type: 'CHAT'
+              };
+              stompClient.send("/app/chat.sendPrivateMessage", {}, JSON.stringify(chatMessage));
+              document.querySelector('#' + receiver + '-message').value = '';
+            }
+          }
+        }
+      })
+    }, true);
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+  // 发送信息
+  document.querySelector('#public-send').addEventListener('submit', sendMessage, true);
+
+  function sendMessage(event) {
+    event.preventDefault();
+    // 获取表格数据
+    var messageContent = document.querySelector('#public-message').value.trim();
+    var receiverId = document.querySelector('#public-receiver').value.trim();
+    if (messageContent && stompClient) {
+      var chatMessage = {
+        sender: username,
+        msg: messageContent,
+        receiver: receiverId,
+        type: 'CHAT'
+      };
+      stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+      document.querySelector('#public-message').value = '';
+    }
+  }
+</script>
+<script>
+  // 点击头像后进行私聊时，先判断有没有对应的chat-item，如果没有，就创建一个，然后跳转到对应的chat-room
+  function jumpItem(userToChat) {
+    // 首先自己不能添加自己的聊天室
+    if (userToChat == username) {
+      return;
+    }
+    var chatItems = document.querySelectorAll('.chat-item');
+    var flag = false;
+    chatItems.forEach(item => {
+      if (item.getAttribute('data-chat') == userToChat) {
+        flag = true;
+      }
+    });
+    if (!flag) {
+      addNewChat(userToChat);
+    }
+    chatItems.forEach(item => {
+      item.classList.remove('active');
+    });
+    var chatRooms = document.querySelectorAll('.chat-room');
+    chatRooms.forEach(room => {
+      room.style.display = 'none';
+    });
+    document.querySelector('[data-chat="' + userToChat + '"]').classList.add('active');
+    document.getElementById(userToChat + '-chat').style.display = 'block';
+  }
+</script>
+<script>
+  // 先获取用户名
+  let username;
+  let stompClient;
+  let colors = [
+    '#2196F3', '#32c787', '#00BCD4', '#ff5652',
+    '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
+  ];
+  getUsername();
+  function getUsername() {
+    $.ajax({
+      url: '/username',
+      type: 'get',
+      success: function (data) {
+        data = JSON.parse(data);
+        console.log(username);
+        username = data.data;
+        // 连接websocket
+        connect();
+      }
+    })
+  }
+
+  function connect() {
+    stompClient = Stomp.over(new SockJS('/ws'));
+    stompClient.connect({}, onConnected, onError);
+  }
+  function onConnected() {
+    stompClient.subscribe('/topic/public', onMessageReceived);
+    stompClient.subscribe('/user/' + username + '/private', onMessageReceived);
+  }
+  function onMessageReceived(payload) {
+    var message = JSON.parse(payload.body);
+    console.log(message);
+    // 判断接收者是不是public，如果是，就显示在公共聊天室
+    if (message.receiver == 'public') {
+      var messageSender = message.sender;
+      var messageContent = message.msg;
+      var messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+      var senderElement = document.createElement('span');
+      senderElement.classList.add('sender');
+      var senderAvatar = document.createElement('i');
+      senderAvatar.style.backgroundColor = getAvatarColor(messageSender);
+      // 只取前三个字符
+      senderAvatar.innerHTML = messageSender.substring(0, 3);
+      senderElement.appendChild(senderAvatar);
+      // 添加点击事件
+      senderElement.addEventListener('click', function () {
+        jumpItem(messageSender);
+      });
+      messageElement.appendChild(senderElement);
+      var textElement = document.createElement('span');
+      var messageText = document.createTextNode(messageContent);
+      textElement.appendChild(messageText);
+      messageElement.appendChild(textElement);
+      var messageArea = document.querySelector('#public-content');
+      messageArea.appendChild(messageElement);
+      messageArea.scrollTop = messageArea.scrollHeight;
+    } else if (message.sender === username) {
+      // 如果是自己发的私聊，肯定已经创建好了，根据receiver找到对应的chat-room，添加信息即可
+      var messageSender = message.sender;
+      var messageContent = message.msg;
+      var messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+      var senderElement = document.createElement('span');
+      senderElement.classList.add('sender');
+      var senderAvatar = document.createElement('i');
+      senderAvatar.style.backgroundColor = getAvatarColor(messageSender);
+      // 只取前三个字符
+      senderAvatar.innerHTML = messageSender.substring(0, 3);
+      senderElement.appendChild(senderAvatar);
+      messageElement.appendChild(senderElement);
+      var textElement = document.createElement('span');
+      var messageText = document.createTextNode(messageContent);
+      textElement.appendChild(messageText);
+      messageElement.appendChild(textElement);
+      var messageArea = document.querySelector('#' + message.receiver + '-content');
+      messageArea.appendChild(messageElement);
+      messageArea.scrollTop = messageArea.scrollHeight;
+    } else {
+      // 如果是别人发的私聊，需要先判断有没有创建chat-room，如果没有，就创建一个
+      var receiver = message.sender;
+      var chatRooms = document.querySelectorAll('.chat-room');
+      var flag = false;
+      chatRooms.forEach(room => {
+        if (room.getAttribute('id') == receiver + '-chat') {
+          flag = true;
+        }
+      });
+      if (!flag) {
+        addNewChat(receiver);
+      }
+      var messageSender = message.sender;
+      var messageContent = message.msg;
+      var messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+      var senderElement = document.createElement('span');
+      senderElement.classList.add('sender');
+      var senderAvatar = document.createElement('i');
+      senderAvatar.style.backgroundColor = getAvatarColor(messageSender);
+      // 只取前三个字符
+      senderAvatar.innerHTML = messageSender.substring(0, 3);
+      senderElement.appendChild(senderAvatar);
+      messageElement.appendChild(senderElement);
+      var textElement = document.createElement('span');
+      var messageText = document.createTextNode(messageContent);
+      textElement.appendChild(messageText);
+      messageElement.appendChild(textElement);
+      var messageArea = document.querySelector('#' + message.sender + '-content');
+      messageArea.appendChild(messageElement);
+      messageArea.scrollTop = messageArea.scrollHeight;
+    }
+  }
+  function getAvatarColor(messageSender) {
+    var hash = 0;
+    for (var i = 0; i < messageSender.length; i++) {
+      hash = 31 * hash + messageSender.charCodeAt(i);
+    }
+    var index = Math.abs(hash % colors.length);
+    return colors[index];
+  }
+  function onError(error) {
+    alert(error);
+  }
+</script>
+
+</html>
